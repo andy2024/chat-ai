@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatBot</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f0f2f5;
+    }
+
+    .sidebar {
+  width: 250px;
+  background-color: #f5f5f5;
+  color: black;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Increased gap between elements */
+  justify-content: flex-start; /* Align buttons at the top */
+}
+
+ 
+
+    .sidebar {
+      width: 250px;
+      background-color: #f5f5f5;
+      color: black;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    .sidebar h2 {
+      margin: 0 0 20px 0;
+      font-size: 20px;
+      text-align: center;
+    }
+    .sidebar button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%; /* Uniform length */
+      justify-content: center;
+    }
+    .sidebar button:hover {
+      background-color: #0056b3;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 80%;
+    }
+    .message.user {
+      background-color: #007bff;
+      color: white;
+      margin-left: auto;
+    }
+    .message.assistant {
+      background-color: #e9ecef;
+      color: black;
+      margin-right: auto;
+    }
+    .input-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    select, input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      flex: 1;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .profile-image {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    .profile-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px; /* Consistent vertical spacing */
+    }
+    .button-group button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%; /* Uniform length */
+      justify-content: center;
+    }
+    .button-group button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>ChatBot</h2>
+    <div class="button-group">
+      <button><i class="fas fa-plus"></i> 新建聊天</button>
+      <button><i class="fas fa-history"></i> 历史记录</button>
+      <button><i class="fas fa-microphone"></i> 语音</button>
+    </div>
+    <div class="profile-image">
+      <img src="/andy-icon.jpg" alt="Profile Image">
+    </div>
+  </div>
+  <div class="main">
+    <div class="chat-container" id="chat-container">
+      <!-- Messages will be appended here -->
+    </div>
+    <div class="input-container">
+      <select id="model-select">
+        <option value="openai-gpt-oss">OpenAI gpt-oss</option>
+        <option value="microsoft-phi3">Microsoft Phi-3</option>
+        <option value="google-deepmind">Google DeepMind</option>
+        <option value="xai-grok1">xAI Grok-1</option>
+        <option value="qwenlm-qwen2.5">QwenLM-Qwen2.5</option>
+        <option value="deepseek-v3">DeepSeek-V3</option>
+        <option value="deepseek-r1:1.5b">DeepSeek-R1:1.5B</option>
+      </select>
+      <input type="text" id="user-input" placeholder="输入您的消息...">
+      <button onclick="sendMessage()">发送</button>
+    </div>
+  </div>
+
+  <script>
+    function stripHtmlTags(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      return div.textContent || div.innerText || '';
+    }
+
+    async function sendMessage() {
+      const userInput = document.getElementById('user-input').value.trim();
+      const modelSelect = document.getElementById('model-select').value;
+      const chatContainer = document.getElementById('chat-container');
+
+      if (!userInput) {
+        alert('请输入消息！');
+        return;
+      }
+
+      // Display user message
+      const userMessage = document.createElement('div');
+      userMessage.className = 'message user';
+      userMessage.textContent = userInput;
+      chatContainer.appendChild(userMessage);
+
+      // Clear input
+      document.getElementById('user-input').value = '';
+
+      // Scroll to bottom
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      try {
+        // Send request to DeepSeek API
+        const response = await fetch('http://localhost:11434/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: modelSelect,
+            messages: [{ role: 'user', content: userInput }],
+            max_tokens: 500,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('API request failed');
+        }
+
+        const data = await response.json();
+        const assistantMessageContent = stripHtmlTags(data.choices[0].message.content);
+
+        // Display assistant message
+        const assistantMessage = document.createElement('div');
+        assistantMessage.className = 'message assistant';
+        assistantMessage.textContent = assistantMessageContent;
+        chatContainer.appendChild(assistantMessage);
+
+        // Scroll to bottom
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      } catch (error) {
+        console.error('Error:', error);
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'message assistant';
+        errorMessage.textContent = '抱歉，处理您的请求时出错。';
+        chatContainer.appendChild(errorMessage);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    // Allow sending message with Enter key
+    document.getElementById('user-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
